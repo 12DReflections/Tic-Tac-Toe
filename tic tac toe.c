@@ -97,12 +97,42 @@ void MakeMove(int *board, const int sq, const side) { //board pointer, square se
 	board[sq] = side;
 }
 
-int GetComputerMove(const int *board) {
+int GetWinningMove(int *board, const int side) {
+	int ourMove = -11; 
+	int winFound = 0; //flag if winning move is found
+	int index;
+	
+	for( index = 0; index < 9; ++index) {
+		if( board[ConvertTo25[index]] == EMPTY) { //Converts if square empty = available move
+			ourMove = ConvertTo25[index];
+			board[ourMove] = side;
+			
+			if( FindThreeInARow(board, ourMove, side) == 3) {
+				winFound = 1;
+			}
+			board[ourMove] = EMPTY; //reset board point for next time
+			if( winFound == 1) {
+				break;
+			}
+			ourMove = -1;
+		};
+	}
+	return ourMove;
+}
+
+int GetComputerMove(int *board, const int side) {
 	//Need array with available moves and moves already completed
 	int index = 0;
 	int numFree = 0; //count of availableMoves[ ]
 	int availableMoves[9]; //an array of available moves
 	int randMove = 0; //rand() % numFree 
+	
+	//First check for winning move, if no winning move select random move
+	randMove = GetWinningMove(board, side);
+	if( randMove != -1) {
+		return randMove;
+	}
+	randMove = 0;
 	
 	//Convert selection to the 25 space board including border
 	for( index = 0; index < 9; ++index) {
@@ -177,7 +207,7 @@ void RunGame() {
 			Side = CROSSES;
 		} else{
 		//get move from computer, make move on board, change side
-			LastMoveMade = GetComputerMove(&board[0]);
+			LastMoveMade = GetComputerMove(&board[0], Side);
 			MakeMove(&board[0], LastMoveMade, Side);
 			Side = NOUGHTS;
 			PrintBoard(&board[0]);
