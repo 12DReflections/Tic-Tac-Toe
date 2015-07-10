@@ -25,6 +25,9 @@ const int ConvertTo25[9] = {
 	16,17,18
 };
 
+const int InMiddle = 4; //a.i decision for middle move
+const int Corners[4] = { 0, 2, 6, 8 };
+
 //Get the squares in the array of directions
 int GetNumForDir( int startSq, const int dir, const int *board, const int us ) {
 	int found = 0;
@@ -97,6 +100,26 @@ void MakeMove(int *board, const int sq, const side) { //board pointer, square se
 	board[sq] = side;
 }
 
+int GetNextBest(const int *board) {
+	int ourMove = ConvertTo25[InMiddle];
+	if( board[ourMove] == EMPTY ) {
+		return ourMove;
+	}
+	
+	int index = 0;
+	ourMove = -1; //indicator if found in loop
+	
+	for( index = 0; index < 4; index++) {
+		ourMove = ConvertTo25[Corners[index]];
+		
+		if( board[ourMove] == EMPTY ) {
+			break;
+		}
+		ourMove = -1;
+	}
+	return ourMove;
+}
+
 int GetWinningMove(int *board, const int side) {
 	int ourMove = -11; 
 	int winFound = 0; //flag if winning move is found
@@ -129,13 +152,25 @@ int GetComputerMove(int *board, const int side) {
 	
 	//First check for winning move, if no winning move select random move
 	randMove = GetWinningMove(board, side);
-	if( randMove != -1) {
+	if( randMove != -1 ) {
 		return randMove;
 	}
+	
+	//Blocking, bitwise XOR the side with a '1' to check if the opponent has a winning move
+	randMove = GetWinningMove(board, side ^ 1);
+	if( randMove != -1 ) {
+		return randMove;
+	}
+	
+	randMove = GetNextBest(board);
+	if( randMove != -1 ) {
+		return randMove;
+	}
+	
 	randMove = 0;
 	
 	//Convert selection to the 25 space board including border
-	for( index = 0; index < 9; ++index) {
+	for( index = 0; index < 9; ++index ) {
 		if( board[ConvertTo25[index]] == EMPTY) { //Converts if square empty = available move
 			availableMoves[numFree++] = ConvertTo25[index]; //saving to array is post ++
 		};
